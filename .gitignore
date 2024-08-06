@@ -1,0 +1,47 @@
+# Directorios de entornos virtuales
+env/
+venv/
+*.env
+
+# Archivos de configuración de IDEs
+.vscode/
+.idea/
+
+# Archivos de compilación
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Archivos temporales
+*.tmp
+*.log
+*.swp
+*.swo
+
+# Archivos de bases de datos
+*.db
+*.sqlite3
+
+# Archivos de caché
+*.cache
+*.bak
+
+# Archivos de configuración de distribuciones
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de tests
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Archivos de documentación generada
+docs/_build/
