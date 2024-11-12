@@ -1,32 +1,17 @@
+# Sistema de Procesamiento de Imágenes Asíncrono en Python
+Este proyecto implementa un sistema de procesamiento de imágenes que permite a los clientes enviar imágenes a un servidor HTTP. El servidor convierte la imagen a escala de grises y luego la escala según un factor de tamaño especificado por el cliente. Toda la comunicación y el procesamiento se realiza de forma asíncrona en el servidor HTTP, sin requerir un segundo servidor de escalado.
 
-# Procesamiento de Imágenes en Paralelo
+# Requisitos
+Python 3.7+
+Librerías Python: aiohttp, Pillow, requests
+Sockets y Multiprocessing: utilizados para manejar las conexiones de forma concurrente y eficiente.
 
-Este proyecto permite aplicar filtros a una imagen utilizando procesamiento paralelo con Python y OpenCV. Puedes aplicar filtros de blanco y negro o sepia a una imagen dividiéndola en partes y procesándolas en paralelo.
+# Estructura del Proyecto
+main.py: Archivo principal que inicia el servidor HTTP (async_server) y gestiona la ejecución del cliente.
+async_server.py: Servidor HTTP asíncrono que recibe la imagen del cliente, la convierte a escala de grises, la escala según el factor proporcionado y la envía de vuelta al cliente.
+client.py: Cliente que envía una imagen al async_server junto con un factor de escala.
 
-## Requisitos
-
-- Python 3.x
-- `virtualenv` (opcional, pero recomendado)
-
-## Instalación
-
-1. **Clonar el repositorio:**
-
-   ```bash
-   git clone git@github.com:marcoscassone02/compu2.git
-
-2. **Crear y activar entorno virtual**
-    ```bash
-    python3 -m venv env
-    source env/bin/activate   # En Windows, usa `env\Scripts\activate`
-3. **Instalar dependencias**
-    ```bash
-    pip install -r requirements.txt
-## Uso
-1. **Ejecutar el script**
-    ```bash
-    python3 multithreaded_image_filter.py <ruta_a_imagen_entrada> <ruta_a_imagen_salida> --filtro <blanco_y_negro|sepia> --procesos <numero_de_procesos>
-2. **Ejemplo**
-    ```bash
-    python3 multithreaded_image_filter.py /home/Imagenes/flower.jpg /home/Imágenes/resultado.jpg --filtro blanco_y_negro --procesos 4
-
+# Ejecucion
+git clone <git@github.com:marcoscassone02/compu2.git>
+cd <TP2>
+python3 main.py
