@@ -1,56 +1,48 @@
-import subprocess
-import time
-import os
-import socket
+import aiohttp
+import asyncio
 
-def is_server_running(host='127.0.0.1', port=8080):
-    """Verifica si el servidor está corriendo en el puerto especificado."""
-    try:
-        with socket.create_connection((host, port), timeout=2):
-            return True
-    except (socket.timeout, socket.error):
-        return False
+async def send_image_to_gray_server():
+    """Envía una imagen al servidor de procesamiento de escala de grises."""
+    async with aiohttp.ClientSession() as session:
+        
+        with open('test_image.jpeg', 'rb') as f:
+            image_data = f.read()
 
-def start_server():
-    """Inicia el servidor asíncrono."""
-    print("Iniciando el servidor...")
-    # Ejecuta el servidor en un proceso separado
-    server_process = subprocess.Popen(["python3", "async_server.py"])
-    return server_process
+        
+        data = aiohttp.FormData()
+        data.add_field('image', image_data, filename='test_image.jpeg', content_type='image/jpeg')
 
-def start_client():
-    """Inicia el cliente que interactúa con el servidor."""
-    print("Iniciando el cliente...")
-    # Ejecuta el cliente en un proceso separado
-    client_process = subprocess.Popen(["python3", "client.py"])
-    return client_process
+        async with session.post('http://localhost:8080/process', data=data) as response:
+            if response.status == 200:
+                gray_image_data = await response.read()
+                return gray_image_data
+            else:
+                print(f"Error al procesar la imagen en escala de grises. Status: {response.status}")
+                return None
 
-def main():
-    """Función principal para iniciar el servidor y luego el cliente."""
-    # Asegúrate de que los directorios necesarios existan
-    if not os.path.exists("imagen_procesada"):
-        os.makedirs("imagen_procesada")
+async def send_image_to_scale_server(gray_image_data):
+    """Envía la imagen al servidor de escalado."""
+    async with aiohttp.ClientSession() as session:
+        data = aiohttp.FormData()
+        data.add_field('image', gray_image_data, filename='gray_image.jpeg', content_type='image/jpeg')
+        data.add_field('scale', '0.3')  # Factor de escala 
 
-    # Inicia el servidor
-    server_process = start_server()
+        async with session.post('http://localhost:8081/scale', data=data) as response:
+            if response.status == 200:
+                scaled_image_data = await response.read()
+                with open('imagen_escalada.jpeg', 'wb') as f:
+                    f.write(scaled_image_data)  
+                print("Imagen escalada y guardada como 'imagen_escalada.jpeg'.")
+            else:
+                print(f"Error al escalar la imagen. Status: {response.status}")
 
-    # Verifica si el servidor está en funcionamiento
-    print("Esperando a que el servidor esté disponible...")
-    while not is_server_running():
-        time.sleep(1)  # Espera 1 segundo antes de volver a intentar
-
-    print("Servidor disponible. Iniciando el cliente...")
+async def main():
     
-    # Inicia el cliente
-    client_process = start_client()
+    gray_image_data = await send_image_to_gray_server()
 
-    # Espera a que el cliente termine
-    client_process.wait()
+    if gray_image_data:
+        
+        await send_image_to_scale_server(gray_image_data)
 
-    # Finaliza el servidor después de que el cliente haya terminado
-    print("Cliente completado. Finalizando servidor...")
-    server_process.terminate()
-    server_process.wait()
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    asyncio.run(main())

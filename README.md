@@ -1,17 +1,35 @@
-# Sistema de Procesamiento de Imágenes Asíncrono en Python
-Este proyecto implementa un sistema de procesamiento de imágenes que permite a los clientes enviar imágenes a un servidor HTTP. El servidor convierte la imagen a escala de grises y luego la escala según un factor de tamaño especificado por el cliente. Toda la comunicación y el procesamiento se realiza de forma asíncrona en el servidor HTTP, sin requerir un segundo servidor de escalado.
-
-# Requisitos
-Python 3.7+
-Librerías Python: aiohttp, Pillow, requests
-Sockets y Multiprocessing: utilizados para manejar las conexiones de forma concurrente y eficiente.
+# Image Processing Server
+Este proyecto consiste en un sistema que procesa imágenes en dos etapas utilizando dos servidores. El primer servidor convierte la imagen a escala de grises y el segundo servidor escala la imagen a un tamaño menor. Los dos servidores se ejecutan en segundo plano en la misma terminal y se comunican entre sí para completar el procesamiento de la imagen.
 
 # Estructura del Proyecto
-main.py: Archivo principal que inicia el servidor HTTP (async_server) y gestiona la ejecución del cliente.
-async_server.py: Servidor HTTP asíncrono que recibe la imagen del cliente, la convierte a escala de grises, la escala según el factor proporcionado y la envía de vuelta al cliente.
-client.py: Cliente que envía una imagen al async_server junto con un factor de escala.
+El proyecto consta de tres archivos principales:
+
+main.py: Archivo principal que inicia ambos servidores y procesa la imagen en dos etapas (escala de grises y escalado).
+gray_server.py: Servidor encargado de convertir una imagen a escala de grises.
+scale_server.py: Servidor encargado de escalar la imagen a un tamaño menor.
+test_image.jpeg: Imagen de prueba que se utiliza en el procesamiento.
+
+# Requisitos
+Python 3.6 o superior
+Librerías de Python necesarias:
+aiohttp
+Pillow
 
 # Ejecucion
-git clone <git@github.com:marcoscassone02/compu2.git>
-cd <TP2>
+1.
+
+pip install -r requirements.txt
+
+2.
+
+python3 gray_server.py
+
+3.
+
+python3 scale_server.py
+
+4.
+
 python3 main.py
+(Si se quiere cambiar la escala, cambiarla en el main donde dice Factor de escala)
+
