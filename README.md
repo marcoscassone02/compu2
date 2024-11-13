@@ -5,14 +5,20 @@ Este proyecto consiste en un sistema que procesa imágenes en dos etapas utiliza
 El proyecto consta de tres archivos principales:
 
 main.py: Archivo principal que inicia ambos servidores y procesa la imagen en dos etapas (escala de grises y escalado).
+
 gray_server.py: Servidor encargado de convertir una imagen a escala de grises.
+
 scale_server.py: Servidor encargado de escalar la imagen a un tamaño menor.
+
 test_image.jpeg: Imagen de prueba que se utiliza en el procesamiento.
 
 # Requisitos
 Python 3.6 o superior
+
 Librerías de Python necesarias:
+
 aiohttp
+
 Pillow
 
 # Ejecucion
