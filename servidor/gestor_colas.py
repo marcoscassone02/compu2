@@ -1,42 +1,16 @@
-import threading
-from queue import PriorityQueue
+import queue
 
 class GestorColas:
     def __init__(self):
-        # Diccionario de colas por tipo de trámite
-        self.colas = {
-            'Pago': PriorityQueue(),
-            'Reclamo': PriorityQueue(),
-            'Consulta': PriorityQueue(),
-            'Fraude': PriorityQueue(),
-        }
-        self.contador_turnos = 0
-        self.lock = threading.Lock()
+        self.cola = queue.PriorityQueue()
+        self.contador = 0  # Para desempatar turnos con misma prioridad
 
-    def solicitar_turno(self, tipo_tramite):
-        with self.lock:
-            self.contador_turnos += 1
-            turno_id = f"{tipo_tramite[:3].upper()}-{self.contador_turnos}"
-            # Aquí usamos prioridad simple (puedes mejorar esto)
-            prioridad = self.obtener_prioridad(tipo_tramite)
-            self.colas[tipo_tramite].put((prioridad, turno_id))
-            print(f"[GestorColas] Turno agregado: {turno_id} con prioridad {prioridad}")
-            return turno_id
+    def agregar_turno(self, prioridad, tramite, cliente_id, conn, addr):
+        self.contador += 1
+        # Guardar también la conexión y la dirección
+        self.cola.put((prioridad, self.contador, tramite, cliente_id, conn, addr))
 
-    def obtener_siguiente_turno(self):
-        with self.lock:
-            for tipo, cola in self.colas.items():
-                if not cola.empty():
-                    _, turno_id = cola.get()
-                    print(f"[GestorColas] Turno asignado: {turno_id}")
-                    return turno_id
-            return None
-
-    def obtener_prioridad(self, tipo_tramite):
-        prioridades = {
-            'Pago': 2,
-            'Reclamo': 1,
-            'Consulta': 3,
-            'Fraude': 0,  # Máxima prioridad
-        }
-        return prioridades.get(tipo_tramite, 5)  # 5 = prioridad más baja por defecto
+    def obtener_turno(self):
+        if not self.cola.empty():
+            return self.cola.get()
+        return None
