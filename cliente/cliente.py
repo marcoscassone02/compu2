@@ -22,14 +22,14 @@ def main():
     parser.add_argument('--host', default='localhost')
     parser.add_argument('--port', type=int, default=5000)
     parser.add_argument('--tramite', choices=['pago', 'reclamo', 'consulta'], help="Tipo de trámite")
-    # Eliminar cliente_id del parser
     args = parser.parse_args()
 
+    nombre = input("Ingrese su nombre: ")
     tramite = args.tramite or elegir_tramite()
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((args.host, args.port))
-        mensaje = f"tramite:{tramite}"
+        mensaje = f"nombre:{nombre};tramite:{tramite}"
         s.sendall(mensaje.encode())
         print("Esperando a ser atendido por un administrativo...")
         try:

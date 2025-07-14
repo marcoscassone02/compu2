@@ -2,6 +2,8 @@ import socket
 import threading
 import argparse
 from gestor_colas import GestorColas
+from db import inicializar_db, guardar_turno
+from datetime import datetime
 
 PRIORIDADES = {
     "pago": 1,
@@ -18,8 +20,9 @@ def handle_client(conn, addr, gestor_colas):
         data = conn.recv(1024).decode()
         if not data:
             return
-        # Espera: "tramite:<tipo_tramite>"
+        # Espera: "nombre:<nombre>;tramite:<tipo_tramite>"
         partes = dict(x.split(":") for x in data.strip().split(";") if ":" in x)
+        nombre = partes.get("nombre", "Desconocido")
         tramite = partes.get("tramite")
         prioridad = PRIORIDADES.get(tramite, 3)
         # Asignar cliente_id incremental de forma segura
@@ -28,8 +31,8 @@ def handle_client(conn, addr, gestor_colas):
             cliente_id = str(cliente_id_counter)
         # Enviar el cliente_id al cliente
         conn.sendall(f"CLIENTE_ID:{cliente_id}\n".encode())
-        # Pasar conn y addr a la cola junto con el cliente_id
-        gestor_colas.agregar_turno(prioridad, tramite, cliente_id, conn, addr)
+        # Pasar conn, addr y nombre a la cola junto con el cliente_id
+        gestor_colas.agregar_turno(prioridad, tramite, cliente_id, nombre, conn, addr)
         # No cerrar la conexión aquí, la usará el administrativo
     except Exception as e:
         try:
@@ -43,8 +46,9 @@ def administrativo(gestor_colas, admin_id):
     while True:
         turno = gestor_colas.obtener_turno()
         if turno:
-            prioridad, _, tramite, cliente_id, conn, addr = turno
-            print(f"[ADMIN {admin_id}] Atendiendo turno de {tramite} (cliente {cliente_id}, prioridad {prioridad})")
+            prioridad, _, tramite, cliente_id, nombre, conn, addr = turno
+            print(f"[ADMIN {admin_id}] Atendiendo turno de {tramite} (cliente {cliente_id}, nombre: {nombre}, prioridad {prioridad})")
+            conversacion = []
             try:
                 conn.sendall(f"Usted está siendo atendido por el administrativo {admin_id}. Puede comenzar a conversar.\n".encode())
                 while True:
@@ -57,21 +61,33 @@ def administrativo(gestor_colas, admin_id):
                     if not mensaje_cliente:
                         print(f"[ADMIN {admin_id}] El cliente se desconectó.")
                         break
-                    print(f"[ADMIN {admin_id}] Cliente {cliente_id}: {mensaje_cliente}")
+                    print(f"[ADMIN {admin_id}] Cliente {cliente_id} ({nombre}): {mensaje_cliente}")
+                    conversacion.append(f"Cliente: {mensaje_cliente}")
                     # Si el cliente escribe 'FIN', terminar la conversación
                     if mensaje_cliente.strip().upper() == "FIN":
                         print(f"[ADMIN {admin_id}] El cliente {cliente_id} finalizó la conversación.")
                         conn.sendall("FIN".encode())
+                        conversacion.append("Admin: FIN")
                         break
                     # El administrativo responde
                     respuesta = input(f"[ADMIN {admin_id}] Escriba su respuesta (o 'FIN' para terminar): ")
                     conn.sendall(respuesta.encode())
+                    conversacion.append(f"Admin: {respuesta}")
                     if respuesta.strip().upper() == "FIN":
                         print(f"[ADMIN {admin_id}] Conversación finalizada con cliente {cliente_id}.")
                         break
             except Exception as e:
                 print(f"[ADMIN {admin_id}] Error en la conversación: {e}")
             finally:
+                # Guardar el turno atendido en la base de datos
+                guardar_turno(
+                    cliente_id=cliente_id,
+                    nombre=nombre,
+                    tramite=tramite,
+                    prioridad=prioridad,
+                    admin_id=admin_id,
+                    conversacion="\n".join(conversacion) if conversacion else None
+                )
                 conn.close()
         else:
             import time
@@ -82,6 +98,9 @@ def main():
     parser.add_argument('--host', default='localhost')
     parser.add_argument('--port', type=int, default=5000)
     args = parser.parse_args()
+
+    # Inicializar la base de datos
+    inicializar_db()
 
     gestor_colas = GestorColas()
 
