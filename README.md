@@ -1,60 +1,57 @@
-# 🏦 Sistema de Turnos Virtual – Cliente/Servidor
+# 🏦 CLI-Serv Turnos
 
-## 📌 Descripción
-Este proyecto implementa una aplicación **cliente–servidor en Python** que simula un **sistema de turnos virtuales**, similar a los utilizados en bancos u organismos públicos.  
-Múltiples clientes pueden solicitar turnos de manera concurrente y son atendidos por operadores administrativos mediante una conversación en terminal.
+Sistema distribuido cliente-servidor que simula un sistema de atención virtual con asignación dinámica de turnos.
 
-El sistema aplica conceptos de **concurrencia, asincronismo, IPC y colas distribuidas**, separando la lógica de atención de la persistencia de datos para mantener el servidor siempre responsivo.
+Implementa concurrencia, paralelismo, comunicación asíncrona (IPC) y persistencia en base de datos.
 
 ---
 
-## ⚙️ Características principales
-- Conexión de múltiples clientes concurrentes mediante **sockets TCP**
-- Comunicación **asíncrona** usando `asyncio`
-- Gestión de turnos **FIFO**
-- Prioridad por tipo de trámite (`reclamo`, `pago`, `consulta`)
-- Escalamiento automático de prioridad según tiempo de espera
-- Conversación en tiempo real cliente–operador por terminal
-- Persistencia asíncrona con **Celery + Redis**
-- Almacenamiento de datos en **SQLite**
-- Uso de **cola de tareas distribuida**
-- Aplicaciones **CLI** con parseo de argumentos
-- Despliegue utilizando **Docker**
+## 🚀 Características
+
+- 🔄 Múltiples clientes y administrativos concurrentes
+- ⚡ I/O multiplexado con `selectors`
+- 🧠 Cola de prioridad con *aging*
+- 🔀 Procesos independientes (`multiprocessing`)
+- 🔗 Comunicación asíncrona mediante `Queue`
+- 💾 Persistencia en SQLite
+- 🌐 Soporte IPv4 / IPv6 / Dual Stack
+- 🐳 Despliegue con Docker
 
 ---
 
-## 🧱 Arquitectura
-El sistema está compuesto por los siguientes elementos:
+## 🏗 Arquitectura
 
-- **Servidor**  
-  Gestiona conexiones, cola de turnos y asignación de operadores.
+**Componentes principales:**
 
-- **Clientes**  
-  Solicitan turnos y mantienen una conversación con el operador asignado.
+- **Proxy Server**
+  - Maneja conexiones TCP
+  - Empareja cliente ↔ administrativo
+  - Registra conversaciones
 
-- **Operadores (admins)**  
-  Atienden turnos desde terminales independientes.
+- **Turnos Service (Proceso separado)**
+  - Gestiona cola de prioridad
+  - Asigna turnos disponibles
 
-- **Worker Celery**  
-  Ejecuta tareas de persistencia en segundo plano.
+- **DB Worker (Proceso separado)**
+  - Persiste turnos y conversaciones en SQLite
 
-- **Redis**  
-  Broker de la cola distribuida.
+Base de datos utilizada:
 
-- **SQLite**  
-  Base de datos para auditoría y trazabilidad.
+data/turnos.db
 
----
+## 🐳 Ejecutar con Docker
 
-## 📋 Requisitos
-- Python 3.10 o superior
-- Docker
-- Docker Compose
-
----
-
-## 🚀 Ejecución del proyecto
-
-### 1️⃣ Levantar Redis y el worker
 ```bash
-docker compose up -d
+docker compose up --build
+```
+
+## Crear Administradores
+
+```bash
+./run_admins.sh
+```
+## Crear Cliente
+
+```bash
+python3 cliente/cliente.py --host localhost --port 5000
+```
