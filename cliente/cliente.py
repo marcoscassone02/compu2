@@ -61,7 +61,7 @@ def enviar_mensajes(s: socket.socket, done: threading.Event):
 
         if r:
             mensaje_cliente = sys.stdin.readline()
-            if not mensaje_cliente:  # EOF
+            if not mensaje_cliente:  
                 done.set()
                 break
 
@@ -95,7 +95,6 @@ def main():
         mensaje = f"nombre:{nombre};tramite:{tramite}"
         s.sendall(mensaje.encode())
 
-        # Recibe ID
         cliente_id_msg = s.recv(1024).decode(errors="ignore")
         if cliente_id_msg.startswith("CLIENTE_ID:"):
             cliente_id = cliente_id_msg.split(":", 1)[1].strip()

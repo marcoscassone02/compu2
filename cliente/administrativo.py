@@ -60,7 +60,7 @@ def enviar_mensajes(s: socket.socket, stop: threading.Event, in_session: threadi
 
         if r:
             line = sys.stdin.readline()
-            if not line:  # EOF (Ctrl+D)
+            if not line:  
                 stop.set()
                 break
 

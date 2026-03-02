@@ -200,33 +200,15 @@ def main():
                 pass
             return
 
-        # Log y relay
+                # Log y relay (con prefijo + FIN correcto)
         with sessions_lock:
             src_role = role_by_sock.get(conn)
             src_id = id_by_sock.get(conn)
             dst_id = id_by_sock.get(dst)
 
-        if src_role == "ADMIN":
-            admin_id = src_id
-            cliente_id = dst_id
-            log_session(admin_id, cliente_id, f"Admin: {msg.strip()}")
-        else:
-            cliente_id = src_id
-            admin_id = dst_id
-            log_session(admin_id, cliente_id, f"Cliente: {msg.strip()}")
+        clean = msg.strip()
 
-        # reenviar
-        try:
-            dst.sendall(msg.encode())
-        except Exception:
-            unpair(conn, reason_msg="El otro extremo se desconectó.")
-            cleanup_conn(dst)
-            cleanup_conn(conn)
-            return
-
-        # FIN => cerrar sesión y persistir
-        if msg.strip().upper() == "FIN":
-            # avisamos a ambos
+        if clean.upper() == "FIN":
             try:
                 conn.sendall("FIN\n".encode())
             except Exception:
@@ -237,6 +219,38 @@ def main():
                 pass
 
             unpair(conn, reason_msg=None)
+
+            with sessions_lock:
+                role_conn = role_by_sock.get(conn)
+                role_dst = role_by_sock.get(dst)
+
+            if role_conn == "CLIENT":
+                cleanup_conn(conn)
+            elif role_dst == "CLIENT":
+                cleanup_conn(dst)
+
+            return
+
+        if src_role == "ADMIN":
+            admin_id = src_id
+            cliente_id = dst_id
+            out = f"Admin {admin_id}: {clean}\n"
+        else:
+            cliente_id = src_id
+            admin_id = dst_id
+            out = f"Cliente {cliente_id}: {clean}\n"
+
+        # guardar transcript con lo mismo que se muestra
+        log_session(admin_id, cliente_id, out.strip())
+
+        # reenviar con etiqueta
+        try:
+            dst.sendall(out.encode())
+        except Exception:
+            unpair(conn, reason_msg="El otro extremo se desconectó.")
+            cleanup_conn(dst)
+            cleanup_conn(conn)
+            return
 
     def cleanup_conn(conn):
         # remover de maps
