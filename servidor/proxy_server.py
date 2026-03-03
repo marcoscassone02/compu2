@@ -271,34 +271,41 @@ def main():
 
         close_socket(conn)
 
-    # Server socket (IPv4 / IPv6 / Dual)
-    if args.family == "ipv4":
-        family = socket.AF_INET
-        bind_addr = (args.host, args.port)
+    # Server sockets (IPv4 + IPv6 separados)
+    servers = []
 
-    elif args.family == "ipv6":
-        family = socket.AF_INET6
-        bind_addr = (args.host, args.port, 0, 0)
+    # IPv4
+    if args.family in ("ipv4", "dual"):
+        server_v4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_v4.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    else:  
-        family = socket.AF_INET6
-        bind_addr = (args.host, args.port, 0, 0)
+        host_v4 = args.host if args.host not in ("localhost", "::") else "0.0.0.0"
+        server_v4.bind((host_v4, args.port))
 
-    server = socket.socket(family, socket.SOCK_STREAM)
-    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_v4.listen()
+        server_v4.setblocking(False)
+        sel.register(server_v4, selectors.EVENT_READ, data=None)
+        servers.append(server_v4)
 
-    if args.family == "dual":
+    # IPv6
+    if args.family in ("ipv6", "dual"):
+        server_v6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        server_v6.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
         try:
-            server.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+            server_v6.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
         except OSError:
-            print("[PROXY] Aviso: el SO no permite dual-stack (IPV6_V6ONLY).")
+            pass
 
-    server.bind(bind_addr)
-    server.listen()
-    server.setblocking(False)
-    sel.register(server, selectors.EVENT_READ, data=None)
+        host_v6 = args.host if args.host != "localhost" else "::"
+        server_v6.bind((host_v6, args.port, 0, 0))
 
-    print(f"[PROXY] Escuchando en {args.host}:{args.port}")
+        server_v6.listen()
+        server_v6.setblocking(False)
+        sel.register(server_v6, selectors.EVENT_READ, data=None)
+        servers.append(server_v6)
+
+    print(f"[PROXY] Escuchando en puerto {args.port} (family={args.family})")
 
     try:
         while True:
@@ -371,10 +378,11 @@ def main():
             sel.close()
         except Exception:
             pass
-        try:
-            server.close()
-        except Exception:
-            pass
+        for s in servers:
+            try:
+                s.close()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
